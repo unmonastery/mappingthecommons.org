@@ -1,219 +1,671 @@
 <?php
 /**
- * Custom template tags for this theme.
- * Eventually, some of the functionality here could be replaced by core features.
+ * @package Make
  */
 
-if ( ! function_exists( 'zerif_paging_nav' ) ) :
-
+if ( ! function_exists( 'ttfmake_comment' ) ) :
 /**
- * Display navigation to next/previous set of posts when applicable.
+ * Template for comments and pingbacks.
+ *
+ * Used as a callback by wp_list_comments() for displaying the comments.
+ *
+ * @since  1.0.0.
+ *
+ * @param  array    $comment    The current comment object.
+ * @param  array    $args       The comment configuration arguments.
+ * @param  mixed    $depth      Depth of the current comment.
+ *
+ * @return void
  */
+function ttfmake_comment( $comment, $args, $depth ) {
+	$GLOBALS['comment'] = $comment;
 
-function zerif_paging_nav() {
+	if ( 'pingback' == $comment->comment_type || 'trackback' == $comment->comment_type ) : ?>
 
-	echo '<div class="clear"></div>';
+	<li id="comment-<?php comment_ID(); ?>" <?php comment_class(); ?>>
+		<div class="comment-body">
+			<?php esc_html_e( 'Pingback:', 'make' ); ?> <?php comment_author_link(); ?> <?php edit_comment_link( esc_html__( 'Edit', 'make' ), '<span class="edit-link">', '</span>' ); ?>
+		</div>
 
-	?>
+	<?php else : ?>
 
-	<nav class="navigation paging-navigation" role="navigation">
+	<li id="comment-<?php comment_ID(); ?>" <?php comment_class( empty( $args['has_children'] ) ? '' : 'comment-parent' ); ?>>
+		<article id="div-comment-<?php comment_ID(); ?>" class="comment-body">
+			<header class="comment-header">
+				<?php // Avatar
+				if ( 0 != $args['avatar_size'] ) :
+					echo get_avatar( $comment, $args['avatar_size'] );
+				endif;
+				?>
+				<div class="comment-date">
+					<a href="<?php echo esc_url( get_comment_link( $comment->comment_ID ) ); ?>">
+						<time datetime="<?php comment_time( 'c' ); ?>">
+							<?php
+							printf(
+								esc_html_x( '%1$s at %2$s', '1: date, 2: time', 'make' ),
+								get_comment_date(),
+								get_comment_time()
+							);
+							?>
+						</time>
+					</a>
+				</div>
+				<div class="comment-author vcard">
+					<?php
+					printf(
+						'%1$s <span class="says">%2$s</span>',
+						sprintf(
+							'<cite class="fn">%s</cite>',
+							get_comment_author_link()
+						),
+						// Translators: this string is a verb whose subject is a comment author. e.g. Bob says: Hello.
+						esc_html__( 'says:', 'make' )
+					);
+					?>
+				</div>
 
-		<h2 class="screen-reader-text"><?php _e( 'Posts navigation', 'zerif-lite' ); ?></h2>
+				<?php if ( '0' == $comment->comment_approved ) : ?>
+				<p class="comment-awaiting-moderation"><?php esc_html_e( 'Your comment is awaiting moderation.', 'make' ); ?></p>
+				<?php endif; ?>
+			</header>
 
-		<div class="nav-links">
-
-			<?php if ( get_next_posts_link() ) : ?>
-
-			<div class="nav-previous"><?php next_posts_link( __( '<span class="meta-nav">&larr;</span> Older posts', 'zerif-lite' ) ); ?></div>
-
-			<?php endif; ?>
-
-			<?php if ( get_previous_posts_link() ) : ?>
-
-			<div class="nav-next"><?php previous_posts_link( __( 'Newer posts <span class="meta-nav">&rarr;</span>', 'zerif-lite' ) ); ?></div>
-
-			<?php endif; ?>
-
-		</div><!-- .nav-links -->
-
-	</nav><!-- .navigation -->
-
-	<?php
-
-}
-
-endif;
-
-if ( ! function_exists( 'zerif_post_nav' ) ) :
-
-/**
-* Display navigation to next/previous post when applicable.
-*/
-
-function zerif_post_nav() {
-
-	// Don't print empty markup if there's nowhere to navigate.
-
-	$previous = ( is_attachment() ) ? get_post( get_post()->post_parent ) : get_adjacent_post( false, '', true );
-
-	$next     = get_adjacent_post( false, '', false );
-
-	if ( ! $next && ! $previous ) {
-
-		return;
-
-	}
-
-	?>
-
-	<nav class="navigation post-navigation" role="navigation">
-
-		<h2 class="screen-reader-text"><?php _e( 'Post navigation', 'zerif-lite' ); ?></h2>
-
-		<div class="nav-links">
+			<div class="comment-content">
+				<?php comment_text(); ?>
+			</div>
 
 			<?php
-
-				previous_post_link( '<div class="nav-previous">%link</div>', _x( '<span class="meta-nav">&larr;</span> %title', 'Previous post link', 'zerif-lite' ) );
-
-				next_post_link(     '<div class="nav-next">%link</div>',     _x( '%title <span class="meta-nav">&rarr;</span>', 'Next post link',     'zerif-lite' ) );
-
+			comment_reply_link( array_merge( $args, array(
+				'add_below' => 'div-comment',
+				'depth'     => $depth,
+				'max_depth' => $args['max_depth'],
+				'before'    => '<footer class="comment-reply">',
+				'after'     => '</footer>',
+			) ) );
 			?>
+		</article>
 
-		</div><!-- .nav-links -->
-
-	</nav><!-- .navigation -->
-
-	<?php
-
+	<?php endif;
 }
-
 endif;
 
-if ( ! function_exists( 'zerif_posted_on' ) ) :
-
+if ( ! function_exists( 'ttfmake_categorized_blog' ) ) :
 /**
-
- * Prints HTML with meta information for the current post-date/time and author.
-
- */
-
-function zerif_posted_on() {
-
-	$time_string = '<time class="entry-date published" datetime="%1$s">%2$s</time>';
-
-	if ( get_the_time( 'U' ) !== get_the_modified_time( 'U' ) ) {
-
-		$time_string .= '<time class="updated" datetime="%3$s">%4$s</time>';
-
-	}
-
-	$time_string = sprintf( $time_string,
-
-		esc_attr( get_the_date( 'c' ) ),
-
-		esc_html( get_the_date() ),
-
-		esc_attr( get_the_modified_date( 'c' ) ),
-
-		esc_html( get_the_modified_date() )
-
-	);
-
-	printf( __( '<span class="posted-on">Posted on %1$s</span><span class="byline"> by %2$s</span>', 'zerif-lite' ),
-
-		sprintf( '<a href="%1$s" rel="bookmark">%2$s</a>',
-
-			esc_url( get_permalink() ),
-
-			$time_string
-
-		),
-
-		sprintf( '<span class="author vcard"><a class="url fn n" href="%1$s">%2$s</a></span>',
-
-			esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ),
-
-			esc_html( get_the_author() )
-
-		)
-
-	);
-
-}
-
-endif;
-
-/**
-
  * Returns true if a blog has more than 1 category.
-
  *
-
+ * @since 1.0.0.
+ * @since 1.7.0. Updated to match Twenty Sixteen's functionality.
+ *
  * @return bool
-
  */
-
-function zerif_categorized_blog() {
-
-	if ( false === ( $all_the_cool_cats = get_transient( 'zerif_categories' ) ) ) {
-
+function ttfmake_categorized_blog() {
+	if ( false === ( $all_the_cool_cats = get_transient( 'make_category_count' ) ) ) {
 		// Create an array of all the categories that are attached to posts.
-
 		$all_the_cool_cats = get_categories( array(
-
 			'fields'     => 'ids',
-
-			'hide_empty' => 1,
-
-
-
 			// We only need to know if there is more than one category.
-
 			'number'     => 2,
-
 		) );
 
-
-
 		// Count the number of categories that are attached to the posts.
-
 		$all_the_cool_cats = count( $all_the_cool_cats );
 
-
-
-		set_transient( 'zerif_categories', $all_the_cool_cats );
-
+		set_transient( 'make_category_count', $all_the_cool_cats, WEEK_IN_SECONDS );
 	}
-
-
 
 	if ( $all_the_cool_cats > 1 ) {
-
-		// This blog has more than 1 category so zerif_categorized_blog should return true.
-
+		// This blog has more than 1 category so return true.
 		return true;
-
 	} else {
-
-		// This blog has only 1 category so zerif_categorized_blog should return false.
-
+		// This blog does not have more than 1 category so return false.
 		return false;
+	}
+}
+endif;
 
+if ( ! function_exists( 'ttfmake_get_read_more' ) ) :
+/**
+ * Return a read more link
+ *
+ * Use '%s' as a placeholder for the post URL.
+ *
+ * @since  1.0.0.
+ *
+ * @param  string    $before    HTML before the text.
+ * @param  string    $after     HTML after the text.
+ *
+ * @return string               Full read more HTML.
+ */
+function ttfmake_get_read_more( $before = '<a class="more-link" href="%s">', $after = '</a>' ) {
+	// Add the permalink
+	if ( false !== strpos( $before, '%s' ) ) {
+		$before = sprintf(
+			$before,
+			get_permalink()
+		);
 	}
 
+	$more = false;
+
+	// Check for deprecated filter
+	if ( has_filter( 'make_read_more_text' ) ) {
+		Make()->compatibility()->deprecated_hook(
+			'make_read_more_text',
+			'1.5.0',
+			esc_html__( '
+				The hook has been replaced with a theme option in the Customizer.
+				The theme option will only be available if no filters have been added to the hook.
+			', 'make' )
+		);
+
+		/**
+		 * Deprecated: Filter the value of the read more text.
+		 *
+		 * This filter hook has been deprecated in favor of a theme option in the Customizer. The theme option
+		 * will only be available if no filters have been added to the hook.
+		 *
+		 * @since 1.2.3.
+		 * @deprecated 1.5.0.
+		 *
+		 * @param string $read_more_text The read more text value.
+		 */
+		$more = apply_filters( 'make_read_more_text', $more );
+	}
+
+	// No filters, get the theme option.
+	if ( false === $more ) {
+		$more = make_get_thememod_value( 'label-read-more' );
+	}
+
+	return $before . $more . $after;
+}
+endif;
+
+if ( ! function_exists( 'ttfmake_maybe_show_site_region' ) ) :
+/**
+ * Output the site region (header or footer) markup if the current view calls for it.
+ *
+ * @since  1.0.0.
+ *
+ * @param  string    $region    Region to maybe show.
+ * @return void
+ */
+function ttfmake_maybe_show_site_region( $region ) {
+	if ( ! in_array( $region, array( 'header', 'footer' ) ) ) {
+		return;
+	}
+
+	// Get the view
+	$view = make_get_current_view();
+
+	// Get the relevant option
+	$hide_region = make_get_thememod_value( 'layout-' . $view . '-hide-' . $region );
+
+	if ( true !== $hide_region ) {
+		get_template_part(
+			'partials/' . $region . '-layout',
+			make_get_thememod_value( $region . '-layout' )
+		);
+	}
+}
+endif;
+
+if ( ! function_exists( 'ttfmake_get_site_header_class' ) ) :
+/**
+ * Compile the classes for the site header
+ *
+ * @since 1.0.0.
+ *
+ * @return string
+ */
+function ttfmake_get_site_header_class() {
+	// Collector
+	$classes = array();
+
+	// Base
+	$classes[] = 'site-header';
+
+	// Layout
+	$classes[] = 'header-layout-' . make_get_thememod_value( 'header-layout' );
+
+	// Title
+	$hide_site_title = make_get_thememod_value( 'hide-site-title' );
+	if ( $hide_site_title || ! get_bloginfo( 'name' ) ) {
+		$classes[] = 'no-site-title';
+	}
+
+	// Tagline
+	$hide_tagline = make_get_thememod_value( 'hide-tagline' );
+	if ( $hide_tagline || ! get_bloginfo( 'description' ) ) {
+		$classes[] = 'no-site-tagline';
+	}
+
+	/**
+	 * Filter: Modify the classes applied to the site header element.
+	 *
+	 * @since 1.7.0.
+	 *
+	 * @param array $classes
+	 */
+	$classes = apply_filters( 'make_site_header_class', $classes );
+
+	// Convert array to string and return
+	return implode( ' ', $classes );
+}
+endif;
+
+if ( ! function_exists( 'ttfmake_maybe_show_sidebar' ) ) :
+/**
+ * Output the sidebar markup if the current view calls for it.
+ *
+ * The function is a wrapper for the get_sidebar() function. In this theme, the sidebars can be turned on and off for
+ * different page views. It is important the the sidebar is *only included* if the user has set the option for it to
+ * be included. As such, the get_sidebar() function needs to additional logic to determine whether or not to even
+ * include the template.
+ *
+ * @since  1.0.0.
+ *
+ * @param  string    $location    The sidebar location (e.g., left, right).
+ *
+ * @return void
+ */
+function ttfmake_maybe_show_sidebar( $location ) {
+	// Get sidebar status
+	$show_sidebar = make_has_sidebar( $location );
+
+	// Output the sidebar
+	if ( true === $show_sidebar ) {
+		get_sidebar( $location );
+	}
+}
+endif;
+
+if ( ! function_exists( 'ttfmake_get_exif_data' ) ) :
+/**
+ * Get EXIF data from an attachment.
+ *
+ * @since  1.0.0.
+ *
+ * @param  int       $attachment_id    The attachment ID to get data from.
+ *
+ * @return string                      The EXIF data with HTML markup.
+ */
+function ttfmake_get_exif_data( $attachment_id = 0 ) {
+	// Validate attachment id
+	if ( 0 === absint( $attachment_id ) ) {
+		$attachment_id = get_post()->ID;
+	}
+
+	$output = '';
+
+	$attachment_meta = wp_get_attachment_metadata( $attachment_id );
+	$image_meta      = ( isset( $attachment_meta['image_meta'] ) ) ? $attachment_meta['image_meta'] : array();
+	if ( ! empty( $image_meta ) ) {
+		// Defaults
+		$defaults = array(
+			'aperture' => 0,
+  			'camera' => '',
+  			'created_timestamp' => 0,
+  			'focal_length' => 0,
+  			'iso' => 0,
+  			'shutter_speed' => 0,
+		);
+		$image_meta = wp_parse_args( $image_meta, $defaults );
+
+		// Convert the shutter speed to a fraction and add units
+		if ( 0 != $image_meta[ 'shutter_speed' ] ) {
+			$raw_ss = floatval( $image_meta['shutter_speed'] );
+			$denominator = 1 / $raw_ss;
+			if ( $denominator > 1 ) {
+				$decimal_places = 0;
+				if ( in_array( number_format( $denominator, 1 ), array( 1.3, 1.5, 1.6, 2.5 ) ) ) {
+					$decimal_places = 1;
+				}
+				// Translators: this string denotes a camera shutter speed as a fraction of a second. %s is a placeholder for the denominator of the fraction.
+				$converted_ss = sprintf(
+					esc_html__( '1/%s second', 'make' ),
+					number_format_i18n( $denominator, $decimal_places )
+				);
+			} else {
+				// Translators: this string denotes a camera shutter speed as a number of seconds. %s is a placeholder for the number.
+				$converted_ss = sprintf(
+					esc_html__( '%s seconds', 'make' ),
+					number_format_i18n( $raw_ss, 1 )
+				);
+			}
+
+			/**
+			 * Filter the shutter speed value.
+			 *
+			 * @since 1.2.3.
+			 * @since 1.7.0. Added $attachment_id parameter.
+			 *
+			 * @param string    $converted_as         The shutter speed value.
+			 * @param float     $raw_shutter_speed    The raw shutter speed value.
+			 * @param int       $attachment_id        The ID of the attachment.
+			 */
+			$image_meta['shutter_speed'] = apply_filters( 'make_exif_shutter_speed', $converted_ss, $image_meta['shutter_speed'], $attachment_id );
+		}
+
+		// Convert the aperture to an F-stop
+		if ( 0 != $image_meta[ 'aperture' ] ) {
+			// Translators: this string denotes a camera f-stop. %s is a placeholder for the f-stop value. E.g. f/3.5
+			$f_stop = sprintf(
+				__( 'f/%s', 'make' ),
+				number_format_i18n( pow( sqrt( 2 ), absint( $image_meta['aperture'] ) ) )
+			);
+
+			/**
+			 * Filter the aperture value.
+			 *
+			 * @since 1.2.3.
+			 * @since 1.7.0. Added $attachment_id parameter.
+			 *
+			 * @param string    $f_stop          The aperture value.
+			 * @param int       $raw_aperture    The raw aperture value.
+			 * @param int       $attachment_id   The ID of the attachment.
+			 */
+			$image_meta['aperture'] = apply_filters( 'make_exif_aperture', $f_stop, $image_meta['aperture'], $attachment_id );
+		}
+
+		// Camera
+		if ( ! empty( $image_meta['camera'] ) ) {
+			// Translators: "Camera" refers to the model name of a camera. %s is a placeholder for the model name.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'Camera: %s', 'make' ) . "</li>\n",
+				esc_html( $image_meta['camera'] )
+			);
+		}
+
+		// Creation Date
+		if ( ! empty( $image_meta['created_timestamp'] ) ) {
+			$date = new DateTime( gmdate( "Y-m-d\TH:i:s\Z", $image_meta['created_timestamp'] ) );
+			// Translators: "Taken" refers to the date that a photograph was taken. %s is a placeholder for that date.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'Taken: %s', 'make' ) . "</li>\n",
+				esc_html( $date->format( get_option( 'date_format' ) ) )
+			);
+		}
+
+		// Focal length
+		if ( ! empty( $image_meta['focal_length'] ) ) {
+			// Translators: "Focal length" refers to the length of a camera's lens. %s is a placeholder for the focal length value, and "mm" is the units in millimeters.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'Focal length: %smm', 'make' ) . "</li>\n",
+				number_format_i18n( absint( $image_meta['focal_length'] ), 0 )
+			);
+		}
+
+		// Aperture
+		if ( ! empty( $image_meta['aperture'] ) ) {
+			// Translators: "Aperture" refers to the amount of light passing through a camera lens. %s is a placeholder for the aperture value, represented as an f-stop.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'Aperture: %s', 'make' ) . "</li>\n",
+				esc_html( $image_meta['aperture'] )
+			);
+		}
+
+		// Exposure
+		if ( ! empty( $image_meta['shutter_speed'] ) ) {
+			// Translators: "Exposure" refers to a camera's shutter speed. %s is a placeholder for the shutter speed value.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'Exposure: %s', 'make' ) . "</li>\n",
+				esc_html( $image_meta['shutter_speed'] )
+			);
+		}
+
+		// ISO
+		if ( ! empty( $image_meta['iso'] ) ) {
+			// Translators: "ISO" is an acronym that refers to a camera's sensitivity to light. %s is a placeholder for the ISO value.
+			$output .= sprintf(
+				'<li>' . esc_html__( 'ISO: %s', 'make' ) . "</li>\n",
+				absint( $image_meta['iso'] )
+			);
+		}
+	}
+
+	// Wrap list items
+	if ( '' !== $output ) {
+		$output = "<ul class=\"entry-exif-list\">\n" . $output . "</ul>\n";
+	}
+
+	/**
+	 * Alter the exif data output.
+	 *
+	 * @since 1.2.3.
+	 *
+	 * @param string    $output           The EXIF data prepared as HTML.
+	 * @param int       $attachment_id    The image being generated.
+	 */
+	return apply_filters( 'make_get_exif_data', $output, $attachment_id );
+}
+endif;
+
+/**
+ * Get a sanitized value for a Theme Mod setting.
+ *
+ * @since 1.7.0.
+ *
+ * @param        $setting_id
+ * @param string $context
+ *
+ * @return mixed
+ */
+function make_get_thememod_value( $setting_id, $context = 'template' ) {
+	return Make()->thememod()->get_value( $setting_id, $context );
 }
 
 /**
- * Flush out the transients used in zerif_categorized_blog.
+ * Get the default value for a Theme Mod setting.
+ *
+ * @since 1.7.0.
+ *
+ * @param $setting_id
+ *
+ * @return mixed
  */
-
-function zerif_category_transient_flusher() {
-
-	delete_transient( 'zerif_categories' );
-
+function make_get_thememod_default( $setting_id ) {
+	return Make()->thememod()->get_default( $setting_id );
 }
 
-add_action( 'edit_category', 'zerif_category_transient_flusher' );
+/**
+ * Get the current view.
+ *
+ * @since 1.7.0.
+ *
+ * @return mixed
+ */
+function make_get_current_view() {
+	return Make()->view()->get_current_view();
+}
 
-add_action( 'save_post',     'zerif_category_transient_flusher' );
+/**
+ * Check if the current view has a sidebar in the specified location (left or right).
+ *
+ * @since 1.7.0.
+ *
+ * @param $location
+ *
+ * @return mixed
+ */
+function make_has_sidebar( $location ) {
+	return Make()->widgets()->has_sidebar( $location );
+}
+
+/**
+ * Check if a custom logo has been set.
+ *
+ * @since 1.7.0.
+ *
+ * @return bool
+ */
+function make_has_logo() {
+	return Make()->logo()->has_logo();
+}
+
+/**
+ * Output the markup for a custom logo.
+ *
+ * @since 1.7.0.
+ *
+ * return void
+ */
+function make_logo() {
+	echo Make()->logo()->get_logo();
+}
+
+/**
+ * Check to see if social icons have been configured for display.
+ *
+ * @since 1.7.0.
+ *
+ * @return bool
+ */
+function make_has_socialicons() {
+	return Make()->socialicons()->has_icon_data();
+}
+
+/**
+ * Display social icons for the site header or footer.
+ *
+ * @since 1.7.0.
+ *
+ * @param $region
+ *
+ * @return void
+ */
+function make_socialicons( $region ) {
+	if ( ! in_array( $region, array( 'header', 'footer' ) ) ) {
+		return;
+	}
+
+	$show_icons = make_has_socialicons() && make_get_thememod_value( $region . '-show-social' );
+
+	if ( $show_icons || is_customize_preview() ) : ?>
+		<div class="<?php echo $region; ?>-social-links">
+	<?php endif;
+
+	if ( $show_icons ) : ?>
+		<?php echo Make()->socialicons()->render_icons(); ?>
+	<?php endif;
+
+	if ( $show_icons || is_customize_preview() ) : ?>
+		</div>
+	<?php endif;
+}
+
+/**
+ * Display a breadcrumb.
+ *
+ * @since 1.7.0.
+ *
+ * @param string $before
+ * @param string $after
+ *
+ * @return void
+ */
+function make_breadcrumb( $before = '<p class="yoast-seo-breadcrumb">', $after = '</p>' ) {
+	if ( Make()->integration()->has_integration( 'yoastseo' ) ) {
+		echo Make()->integration()->get_integration( 'yoastseo' )->maybe_render_breadcrumb( $before, $after );
+	}
+}
+
+/**
+ * Determine which image size to use to display a post's featured image.
+ *
+ * @since 1.7.4.
+ *
+ * @param string $layout_setting
+ *
+ * @return string
+ */
+function make_get_entry_thumbnail_size( $layout_setting = 'none' ) {
+	// Currently viewing an attachment
+	if ( is_attachment() ) {
+		$size = 'full';
+	}
+	// Currently viewing some other post type
+	else {
+		if ( 'post-header' === $layout_setting ) {
+			$size = 'large';
+		} else {
+			$size = ( is_singular() ) ? 'medium' : 'thumbnail';
+		}
+	}
+
+	/**
+	 * Filter: Modify the image size used to display a post's featured image (post thumbnail)
+	 *
+	 * @since 1.7.4.
+	 *
+	 * @param string $size              The ID of the image size to use.
+	 * @param string $layout_setting    The value of the featured image layout setting for the current view.
+	 */
+	return apply_filters( 'make_entry_thumbnail_size', $size, $layout_setting );
+}
+
+if ( ! function_exists( 'sanitize_hex_color' ) ) :
+/**
+ * Sanitizes a hex color.
+ *
+ * This replicates the core function that is unfortunately only available in the Customizer.
+ *
+ * @since  1.0.0.
+ *
+ * @param string $color    The proposed color.
+ *
+ * @return string    The sanitized color.
+ */
+function sanitize_hex_color( $color ) {
+	if ( '' === $color ) {
+		return '';
+	}
+
+	// 3 or 6 hex digits, or the empty string.
+	if ( preg_match('|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
+		return $color;
+	}
+
+	return '';
+}
+endif;
+
+if ( ! function_exists( 'sanitize_hex_color_no_hash' ) ) :
+/**
+ * Sanitizes a hex color without a hash. Use sanitize_hex_color() when possible.
+ *
+ * This replicates the core function that is unfortunately only available in the Customizer.
+ *
+ * @since  1.0.0.
+ *
+ * @param  string         $color    The proposed color.
+ * @return string|null              The sanitized color.
+ */
+function sanitize_hex_color_no_hash( $color ) {
+	$color = ltrim( $color, '#' );
+	if ( '' === $color ) {
+		return '';
+	}
+
+	return sanitize_hex_color( '#' . $color ) ? $color : null;
+}
+endif;
+
+if ( ! function_exists( 'maybe_hash_hex_color' ) ) :
+/**
+ * Ensures that any hex color is properly hashed.
+ *
+ * This replicates the core function that is unfortunately only available in the Customizer.
+ *
+ * @since  1.0.0.
+ *
+ * @param  string         $color    The proposed color.
+ * @return string|null              The sanitized color.
+ */
+function maybe_hash_hex_color( $color ) {
+	if ( $unhashed = sanitize_hex_color_no_hash( $color ) ) {
+		return '#' . $unhashed;
+	}
+
+	return $color;
+}
+endif;

@@ -1,0 +1,8 @@
+[26-Jul-2016 06:06:41] PHP Fatal error:  Call to undefined function  get_header() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/404.php on line 5
+[02-Aug-2016 01:45:39] PHP Fatal error:  Call to undefined function  get_header() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/archive.php on line 6
+[03-Aug-2016 07:05:14] PHP Fatal error:  Call to undefined function  get_template_directory() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/functions.php on line 17
+[05-Aug-2016 23:13:11] PHP Fatal error:  Call to undefined function  get_template_directory() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/functions.php on line 17
+[07-Aug-2016 11:48:34] PHP Fatal error:  Call to undefined function  language_attributes() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/header.php on line 6
+[07-Aug-2016 11:48:35] PHP Fatal error:  Call to undefined function  ttfmake_maybe_show_site_region() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/footer.php on line 10
+[09-Aug-2016 19:36:24] PHP Fatal error:  Call to undefined function  get_template_directory() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/functions.php on line 17
+[10-Aug-2016 14:47:29] PHP Fatal error:  Call to undefined function  get_template_directory() in /home3/keikreut/public_html/mappingthecommons/wp-content/themes/make/functions.php on line 17

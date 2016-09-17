@@ -1,20 +1,36 @@
-<?php/** * The template for displaying all pages.
+<?php
+/**
+ * @package Make
  */
-get_header(); ?>
-<div class="clear"></div>
-</header> <!-- / END HOME SECTION  -->
-<div id="content" class="site-content">
-	<div class="container">
-	<?php		if( (function_exists('is_cart') && is_cart()) || (function_exists('is_account_page') && is_account_page()) || (function_exists('is_checkout') && is_checkout() ) ) {			echo '<div class="content-left-wrap col-md-12">';		}		else {			echo '<div class="content-left-wrap col-md-9">';		}		?>
-		<div id="primary" class="content-area">
-			<main itemscope itemtype="http://schema.org/WebPageElement" itemprop="mainContentOfPage" id="main" class="site-main" role="main">
-				<?php while ( have_posts() ) : the_post(); 										get_template_part( 'content', 'page' );
-						if ( comments_open() || '0' != get_comments_number() ) :
-							comments_template();
-						endif;
-					endwhile; 				?>
-			</main><!-- #main -->
-		</div><!-- #primary -->
-	<?php		if( (function_exists('is_cart') && is_cart()) || (function_exists('is_account_page') && is_account_page()) || (function_exists('is_checkout') && is_checkout() ) ) {			echo '</div>';		}		else {			echo '</div>';			echo '<div class="sidebar-wrap col-md-3 content-left-wrap">';				get_sidebar();			echo '</div>';		}		?>	
-	</div><!-- .container -->
+
+get_header();
+global $post;
+?>
+
+<?php ttfmake_maybe_show_sidebar( 'left' ); ?>
+
+<main id="site-main" class="site-main" role="main">
+<?php if ( have_posts() ) : ?>
+
+	<?php while ( have_posts() ) : the_post(); ?>
+		<?php
+		/**
+		 * Allow for changing the template partial.
+		 *
+		 * @since 1.2.3.
+		 *
+		 * @param string     $type    The default template type to use.
+		 * @param WP_Post    $post    The post object for the current post.
+		 */
+		$template_type = apply_filters( 'make_template_content_page', 'page', $post );
+		get_template_part( 'partials/content', $template_type );
+		?>
+		<?php get_template_part( 'partials/content', 'comments' ); ?>
+	<?php endwhile; ?>
+
+<?php endif; ?>
+</main>
+
+<?php ttfmake_maybe_show_sidebar( 'right' ); ?>
+
 <?php get_footer(); ?>

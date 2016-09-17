@@ -1,57 +1,44 @@
 <?php
 /**
- * The template for displaying Search Results pages.
+ * @package Make
  */
-get_header(); ?>
 
-<div class="clear"></div>
+get_header();
+global $post;
+?>
 
-</header> <!-- / END HOME SECTION  -->
+<?php ttfmake_maybe_show_sidebar( 'left' ); ?>
 
-<div id="content" class="site-content">
+<main id="site-main" class="site-main" role="main">
+<?php if ( have_posts() ) : ?>
 
-	<div class="container">
+	<header class="section-header">
+		<?php make_breadcrumb(); ?>
+		<?php get_template_part( 'partials/section', 'title' ); ?>
+	</header>
 
-		<div class="content-left-wrap col-md-9">
+	<?php while ( have_posts() ) : the_post(); ?>
+		<?php
+		/**
+		 * Allow for changing the template partial.
+		 *
+		 * @since 1.2.3.
+		 *
+		 * @param string     $type    The default template type to use.
+		 * @param WP_Post    $post    The post object for the current post.
+		 */
+		$template_type =  apply_filters( 'make_template_content_search', 'search', $post );
+		get_template_part( 'partials/content', $template_type );
+		?>
+	<?php endwhile; ?>
 
-			<div id="primary" class="content-area">
+	<?php get_template_part( 'partials/nav', 'paging' ); ?>
 
-				<main id="main" class="site-main" role="main">
+<?php else : ?>
+	<?php get_template_part( 'partials/content', 'none' ); ?>
+<?php endif; ?>
+</main>
 
-				<?php if ( have_posts() ) : ?>
-
-					<header class="page-header">
-
-						<h1 class="page-title"><?php printf( __( 'Search Results for: %s', 'zerif-lite' ), '<span>' . get_search_query() . '</span>' ); ?></h1>
-
-					</header><!-- .page-header -->
-
-					<?php while ( have_posts() ) : the_post(); ?>
-
-						<?php get_template_part( 'content', get_post_format() ); ?>
-
-					<?php endwhile; ?>
-
-					<?php zerif_paging_nav(); ?>
-
-				<?php else : ?>
-
-					<?php get_template_part( 'content', 'none' ); ?>
-
-				<?php endif; ?>
-
-				</main><!-- #main -->
-
-			</div><!-- #primary -->
-
-		</div><!-- .content-left-wrap -->
-
-		<div class="sidebar-wrap col-md-3 content-left-wrap">
-
-			<?php get_sidebar(); ?>
-
-		</div><!-- .sidebar-wrap -->
-
-	</div><!-- .container -->
+<?php ttfmake_maybe_show_sidebar( 'right' ); ?>
 
 <?php get_footer(); ?>
